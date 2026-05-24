@@ -1,0 +1,109 @@
+stages:
+  - test
+  - docs
+  - deploy
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+lint:
+  stage: test
+  image: python:3.10
+  before_script:
+    - pip install -r requirements.txt
+    - cp .env.example .env
+    - mkdir -p logs
+  script:
+    - pylint app sapere_aude --rcfile=.pylintrc --fail-under=8.0
+
+test:
+  stage: test
+  image: python:3.10
+  before_script:
+    - pip install -r requirements.txt
+    - cp .env.example .env
+    - mkdir -p logs
+  script:
+    - python manage.py migrate --noinput
+    - pytest --cov=app --cov-report=xml --cov-report=html
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - htmlcov/
+  coverage: '/TOTAL.*\s+(\d+%)/'
+
+# Автогенерация и валидация OpenAPI-схемы (schema.yml)
+frontend-test:
+  stage: test
+  image: node:20
+  script:
+    - npm install
+    - npm test -- --ci --coverage
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+
+openapi:
+  stage: test
+  image: python:3.10
+  before_script:
+    - pip install -r requirements.txt
+    - cp .env.example .env
+  script:
+    - python manage.py spectacular --validate --fail-on-warn --file schema.yml
+  artifacts:
+    paths:
+      - schema.yml
+
+docs:
+  stage: docs
+  image: python:3.10
+  before_script:
+    - pip install -r requirements.txt
+    - cp .env.example .env
+  script:
+    - python manage.py spectacular --file schema.yml
+    - mkdir -p docs/_static
+    - cp schema.yml docs/_static/schema.yml
+    - cd docs && make html
+  artifacts:
+    paths:
+      - docs/_build/html/
+      - schema.yml
+
+# Деплой на VPS: см. docs/DEPLOY.md и deploy/
+# Требуются CI/CD Variables: SSH_PRIVATE_KEY (file), при необходимости переопределить DEPLOY_*
+deploy:production:
+  stage: deploy
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache openssh-client bash
+    - eval "$(ssh-agent -s)"
+    - chmod 600 "$SSH_PRIVATE_KEY"
+    - ssh-add "$SSH_PRIVATE_KEY"
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh -o StrictHostKeyChecking=yes "${DEPLOY_USER}@${DEPLOY_HOST}" \
+        "DEPLOY_BRANCH=${DEPLOY_BRANCH} APP_DIR=${DEPLOY_PATH} bash ${DEPLOY_PATH}/deploy/deploy.sh"
+  needs:
+    - job: test
+    - job: lint
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "feature/devops"
+  environment:
+    name: production
+    url: http://188.127.254.20
+  variables:
+    DEPLOY_HOST: "188.127.254.20"
+    DEPLOY_USER: "root"
+    DEPLOY_PATH: "/home/site1/app/sapere-aude"
+    DEPLOY_BRANCH: "main"

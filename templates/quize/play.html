@@ -1,0 +1,513 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d6efd" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Прохождение квиза | QuizService</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+
+        .quiz-card {
+            border-radius: 20px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 1.5rem;
+            line-height: 1.4;
+            color: #2c3e50;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 12px 20px;
+            background-color: white;
+            min-height: 44px;
+        }
+
+        .option-item:hover:not(.disabled-option) {
+            border-color: #0d6efd;
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .option-item.selected {
+            border-color: #0d6efd;
+            background-color: #e7f1ff;
+            position: relative;
+        }
+
+        .option-item.selected::before {
+            content: "✓";
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #0d6efd;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .option-text {
+            font-size: 1rem;
+            margin: 0;
+            padding-right: 30px;
+        }
+
+        .progress-bar-custom {
+            height: 8px;
+            border-radius: 10px;
+            background-color: #e9ecef;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0d6efd, #0dcaf0);
+            transition: width 0.4s ease;
+        }
+
+        .answer-feedback {
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .spinner-custom {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #0d6efd;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .question-text {
+                font-size: 1.2rem;
+            }
+
+            .option-item {
+                padding: 10px 16px;
+            }
+
+            .option-text {
+                font-size: 0.9rem;
+            }
+
+            .quiz-card .card-body {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quiz-card .card-body {
+                padding: 1rem;
+            }
+
+            .btn-lg {
+                font-size: 1rem;
+                padding: 0.5rem 1rem;
+            }
+
+            .option-item {
+                padding: 8px 14px;
+            }
+
+            .option-text {
+                font-size: 0.85rem;
+            }
+        }
+
+        .disabled-option {
+            opacity: 0.6;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+
+        .result-stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        footer {
+            margin-top: auto;
+        }
+
+        .option-item:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">QuizService</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Переключить навигацию">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="/#how-it-works">Как это работает</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/create">Создать квиз</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/login">Выйти</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="quiz-container">
+        <div class="container">
+            <div class="col-12 col-md-10 col-lg-8 mx-auto">
+                <div id="quizApp">
+                    <div v-if="loading" class="loading-overlay">
+                        <div class="text-center text-white">
+                            <div class="spinner-custom mx-auto mb-3"></div>
+                            <h4>Загрузка квиза...</h4>
+                        </div>
+                    </div>
+
+                    <div v-else-if="!quizCompleted && currentQuestion">
+                        <div class="card quiz-card shadow-lg border-0">
+                            <div class="card-body p-4 p-md-5">
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-primary rounded-pill px-3 py-2">
+                                            Вопрос {{ currentIndex + 1 }} из {{ totalQuestions }}
+                                        </span>
+                                        <span class="text-muted">
+                                            {{ Math.round(((currentIndex + 1) / totalQuestions) * 100) }}%
+                                        </span>
+                                    </div>
+                                    <div class="progress-bar-custom">
+                                        <div class="progress-fill" :style="{ width: ((currentIndex + 1) / totalQuestions) * 100 + '%' }"></div>
+                                    </div>
+                                </div>
+
+                                <h2 class="question-text mb-4 fw-bold">{{ currentQuestion.text }}</h2>
+
+                                <div class="options-list mb-4">
+                                    <div v-for="(option, idx) in currentQuestion.options"
+                                        :key="idx"
+                                        class="option-item"
+                                        :class="{ 'selected': selectedAnswer === idx, 'disabled-option': answerSubmitted }"
+                                        @click="!answerSubmitted && selectAnswer(idx)">
+                                        <p class="option-text">{{ option }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button class="btn btn-primary btn-lg"
+                                            @click="submitAnswer"
+                                            :disabled="answerSubmitted || selectedAnswer === null || submitting">
+                                        <span v-if="submitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                        {{ submitting ? 'Отправка...' : 'Ответить' }}
+                                    </button>
+                                </div>
+
+                                <div v-if="answerFeedback" class="alert mt-4 answer-feedback"
+                                    :class="answerFeedback.isCorrect ? 'alert-success' : 'alert-danger'">
+                                    <i :class="answerFeedback.isCorrect ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'" class="me-2"></i>
+                                    {{ answerFeedback.message }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else-if="quizCompleted" class="card quiz-card shadow-lg border-0">
+                        <div class="card-body p-4 p-md-5 text-center">
+                            <div class="result-stats text-white rounded-4 p-4 mb-4">
+                                <i class="bi bi-trophy-fill" style="font-size: 3rem;"></i>
+                                <h2 class="display-6 fw-bold mt-3">Результаты</h2>
+                                <div class="display-1 fw-bold mt-3">{{ score }} / {{ totalQuestions }}</div>
+                                <p class="lead mt-2">{{ Math.round((score / totalQuestions) * 100) }}% правильных ответов</p>
+                            </div>
+
+                            <div class="mt-4">
+                                <h5 class="mb-3">Детали</h5>
+                                <div class="list-group text-start mb-4">
+                                    <div v-for="(result, idx) in detailedResults"
+                                        :key="idx"
+                                        class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <strong>Вопрос {{ idx + 1 }}:</strong> {{ result.questionText }}
+                                                <div class="small mt-1">
+                                                    <span class="text-success">✓ {{ result.userAnswer }}</span>
+                                                </div>
+                                            </div>
+                                            <i :class="result.isCorrect ? 'bi bi-check-circle-fill text-success fs-4' : 'bi bi-x-circle-fill text-danger fs-4'"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                    <a href="/" class="btn btn-primary btn-lg">
+                                        На главную
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="error" class="alert alert-danger text-center">
+                        {{ error }}
+                        <button class="btn btn-sm btn-outline-danger ms-3" @click="loadQuizData">Повторить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-3 mt-auto">
+        <div class="container text-center">
+            <p class="mb-0 small">&copy; 2024 QuizService. Онлайн-платформа для создания и проведения викторин</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const loading = ref(true);
+                const submitting = ref(false);
+                const quizCompleted = ref(false);
+                const error = ref(null);
+                const questions = ref([]);
+                const userAnswers = ref([]);
+                const currentIndex = ref(0);
+                const selectedAnswer = ref(null);
+                const answerSubmitted = ref(false);
+                const answerFeedback = ref(null);
+
+                const currentQuestion = computed(() => {
+                    if (questions.value.length && currentIndex.value < questions.value.length) {
+                        return questions.value[currentIndex.value];
+                    }
+                    return null;
+                });
+
+                const totalQuestions = computed(() => questions.value.length);
+
+                const score = computed(() => {
+                    if (!userAnswers.value.length) return 0;
+                    return userAnswers.value.filter(answer => answer && answer.isCorrect).length;
+                });
+
+                const detailedResults = computed(() => {
+                    return questions.value.map((q, idx) => ({
+                        questionText: q.text,
+                        userAnswer: userAnswers.value[idx] ? userAnswers.value[idx].selectedText : 'Нет ответа',
+                        isCorrect: userAnswers.value[idx] ? userAnswers.value[idx].isCorrect : false
+                    }));
+                });
+
+                const loadQuizData = async () => {
+                    loading.value = true;
+                    error.value = null;
+
+                    try {
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
+                        questions.value = [
+                            {
+                                text: "Что такое Python?",
+                                options: ["Язык программирования", "Змея", "Фреймворк", "База данных"],
+                                correctAnswer: "Язык программирования",
+                                correctIndex: 0
+                            },
+                            {
+                                text: "Какой фреймворк используется для веб-разработки на Python?",
+                                options: ["React", "Vue.js", "Django", "Angular"],
+                                correctAnswer: "Django",
+                                correctIndex: 2
+                            },
+                            {
+                                text: "Что означает аббревиатура HTML?",
+                                options: [
+                                    "Hyper Text Markup Language",
+                                    "High Tech Modern Language",
+                                    "Hyper Transfer Markup Language",
+                                    "Home Tool Markup Language"
+                                ],
+                                correctAnswer: "Hyper Text Markup Language",
+                                correctIndex: 0
+                            },
+                            {
+                                text: "Какой оператор используется для сравнения в Python?",
+                                options: ["=", "==", "===", "is equal"],
+                                correctAnswer: "==",
+                                correctIndex: 1
+                            },
+                            {
+                                text: "Что такое CSS?",
+                                options: [
+                                    "Cascading Style Sheets",
+                                    "Creative Style System",
+                                    "Computer Style Sheets",
+                                    "Colorful Style Sheets"
+                                ],
+                                correctAnswer: "Cascading Style Sheets",
+                                correctIndex: 0
+                            }
+                        ];
+
+                        userAnswers.value = new Array(questions.value.length).fill(null);
+                        loading.value = false;
+                    } catch (err) {
+                        error.value = "Ошибка загрузки вопросов";
+                        loading.value = false;
+                    }
+                };
+
+                const selectAnswer = (index) => {
+                    if (!answerSubmitted.value) {
+                        selectedAnswer.value = index;
+                    }
+                };
+
+                const submitAnswer = async () => {
+                    if (selectedAnswer.value === null || answerSubmitted.value || submitting.value) return;
+
+                    submitting.value = true;
+
+                    try {
+                        await new Promise(resolve => setTimeout(resolve, 300));
+
+                        const question = currentQuestion.value;
+                        const isCorrect = selectedAnswer.value === question.correctIndex;
+                        const selectedText = question.options[selectedAnswer.value];
+
+                        userAnswers.value[currentIndex.value] = {
+                            selectedIndex: selectedAnswer.value,
+                            selectedText: selectedText,
+                            isCorrect: isCorrect
+                        };
+
+                        answerFeedback.value = {
+                            isCorrect: isCorrect,
+                            message: isCorrect
+                                ? "Правильно!"
+                                : `Неверно. Правильный ответ: ${question.correctAnswer}`
+                        };
+
+                        answerSubmitted.value = true;
+
+                        if (currentIndex.value < totalQuestions.value - 1) {
+                            setTimeout(() => {
+                                currentIndex.value++;
+                                selectedAnswer.value = null;
+                                answerSubmitted.value = false;
+                                answerFeedback.value = null;
+                            }, 1500);
+                        } else {
+                            setTimeout(() => {
+                                quizCompleted.value = true;
+                            }, 1500);
+                        }
+                    } catch (err) {
+                        error.value = "Ошибка при отправке ответа";
+                    } finally {
+                        submitting.value = false;
+                    }
+                };
+
+                onMounted(() => {
+                    loadQuizData();
+                });
+
+                return {
+                    loading,
+                    submitting,
+                    quizCompleted,
+                    error,
+                    questions,
+                    currentIndex,
+                    selectedAnswer,
+                    answerSubmitted,
+                    answerFeedback,
+                    currentQuestion,
+                    totalQuestions,
+                    score,
+                    detailedResults,
+                    selectAnswer,
+                    submitAnswer,
+                    Math
+                };
+            }
+        }).mount('#quizApp');
+    </script>
+</body>
+</html>
+
+<!--Реализован интерфейс прохождения квиза с отображением вопросов и вариантов ответов.
+Пользователь выбирает ответ нажатием на блок с вариантом, после чего отправляет его кнопкой "Ответить".
+Реализована блокировка повторной отправки, отображение прогресса и номера вопроса.
+Адаптивный дизайн для мобильных устройств. После завершения показываются результаты.-->

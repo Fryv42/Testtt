@@ -1,0 +1,27 @@
+[MASTER]
+ignore=.git,__pycache__,.venv,migrations,static,media,staticfiles
+load-plugins=pylint_django
+django-settings-module=sapere_aude.settings
+
+[MESSAGES CONTROL]
+disable=
+    C0114,
+    C0115,
+    C0116,
+    R0903,
+    R0913,
+    W4301,
+    R0801,
+    W0201,
+    W0221,
+    W0237,
+    W0613,
+
+[FORMAT]
+max-line-length=120
+
+[DESIGN]
+min-public-methods=1
+
+[REPORTS]
+score=yes

@@ -1,0 +1,399 @@
+/* ============================================
+    Mobile-First адаптация для QuizService
+    Охват: 320px – 768px
+   ============================================ */
+
+/* --- Сброс touch-задержки на iOS --- */
+* {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* --- Safe-area для iPhone X+ --- */
+:root {
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
+}
+
+body {
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
+}
+
+/* --- Базовые правила для всех touch-устройств --- */
+
+/* Минимальный размер touch-target: 44x44 px (Apple HIG + WCAG 2.5.5) */
+button,
+.btn,
+.option-item,
+input[type="radio"],
+input[type="checkbox"],
+.nav-link,
+.close-btn,
+[role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Увеличиваем область нажатия для радио-кнопок */
+input[type="radio"],
+input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    margin: 10px;
+}
+
+/* --- Оптимизация форм под мобильные клавиатуры --- */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+textarea,
+.quiz-title-input,
+.quiz-desc-textarea,
+.question-input,
+.answer-input {
+    font-size: 16px !important;    /* Предотвращает zoom на iOS */
+    padding: 12px 16px;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* inputmode подсказки уже в HTML, здесь только стили */
+input[inputmode="numeric"],
+input[inputmode="decimal"] {
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Навигация --- */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 8px 0;
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+    }
+
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .navbar-toggler {
+        padding: 8px 12px;
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .navbar-nav {
+        padding: 8px 0;
+    }
+
+    .nav-link {
+        padding: 12px 16px;
+        font-size: 1.1rem;
+    }
+}
+
+/* --- Кнопки --- */
+@media (max-width: 768px) {
+    .btn {
+        padding: 12px 24px;
+        font-size: 1rem;
+        width: 100%;         /* Полная ширина на мобильных */
+        margin-bottom: 8px;
+        border-radius: 8px;
+        transition: transform 0.1s ease;
+    }
+
+    .btn:active {
+        transform: scale(0.97);   /* Тактильная обратная связь */
+    }
+
+    .btn-lg {
+        padding: 14px 28px;
+        font-size: 1.1rem;
+    }
+
+    .btn-sm {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+
+    /* Исключение для inline-кнопок */
+    .btn-group .btn,
+    .d-flex .btn {
+        width: auto;
+    }
+}
+
+/* --- Карточки и контейнеры --- */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .quiz-card,
+    .question-card,
+    .section-header {
+        border-radius: 12px;
+        margin: 8px 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .quiz-card .card-body,
+    .question-card .card-body {
+        padding: 16px;
+    }
+
+    .card {
+        margin-bottom: 12px;
+    }
+}
+
+/* --- Вопросы и ответы --- */
+@media (max-width: 768px) {
+    .question-text {
+        font-size: 1.2rem !important;
+        line-height: 1.5;
+        margin-bottom: 16px;
+    }
+
+    .options-list {
+        gap: 8px;
+    }
+
+    .option-item {
+        padding: 14px 12px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        border-radius: 10px;
+        font-size: 1rem;
+        position: relative;
+        transition: background-color 0.15s ease;
+    }
+
+    /* Активное состояние для touch */
+    .option-item:active {
+        background-color: #e7f1ff;
+        transform: scale(0.98);
+    }
+
+    /* Иконка выбора для мобильных */
+    .option-item.selected::before {
+        right: 12px;
+        font-size: 1.4rem;
+    }
+
+    .option-text {
+        font-size: 1rem;
+        padding-right: 36px;
+    }
+}
+
+/* Экстремально маленькие экраны (320px) */
+@media (max-width: 374px) {
+    .question-text {
+        font-size: 1.1rem !important;
+    }
+
+    .option-item {
+        padding: 10px 8px;
+        min-height: 44px;
+    }
+
+    .option-text {
+        font-size: 0.9rem;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+
+    .quiz-card .card-body {
+        padding: 12px;
+    }
+
+    h1, .display-5 {
+        font-size: 1.5rem;
+    }
+
+    h2, .display-6 {
+        font-size: 1.3rem;
+    }
+}
+
+/* --- Таймер для мобильных --- */
+@media (max-width: 768px) {
+    .quiz-timer {
+        font-size: 1.3rem;
+        padding: 8px 14px;
+        min-width: 70px;
+        border-radius: 8px;
+    }
+
+    .quiz-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 12px;
+    }
+}
+
+/* --- Прогресс-бар для мобильных --- */
+@media (max-width: 768px) {
+    .progress-container {
+        height: auto;
+    }
+
+    .progress-bar {
+        height: 6px;
+    }
+
+    .progress-text {
+        font-size: 12px;
+        right: 8px;
+        top: 8px;
+    }
+}
+
+@media (max-width: 374px) {
+    .progress-bar {
+        height: 4px;
+    }
+
+    .progress-text {
+        font-size: 10px;
+    }
+}
+
+/* --- Экран результатов --- */
+@media (max-width: 768px) {
+    .result-stats {
+        padding: 20px 16px !important;
+    }
+
+    .result-stats .display-1 {
+        font-size: 3rem;
+    }
+
+    .list-group-item {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+}
+
+/* --- Страница создания квиза --- */
+@media (max-width: 768px) {
+    .options-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .options-bar .btn-add-question,
+    .options-bar .btn-submit {
+        width: 100%;
+    }
+
+    .preview-toggle-wrapper {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .quiz-title-input {
+        font-size: 1.3rem !important;
+    }
+
+    .question-input {
+        font-size: 1.1rem !important;
+    }
+
+    .answer-item {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .answer-item .answer-input {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    /* Кнопки +/- ответов на мобильных */
+    .btn-add-answer {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+}
+
+/* --- Landing page (index.html) --- */
+@media (max-width: 768px) {
+    .py-5 {
+        padding: 2rem 0 !important;
+    }
+
+    .display-4 {
+        font-size: 1.8rem;
+    }
+
+    .lead {
+        font-size: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.1rem;
+    }
+}
+
+/* --- Скролл внутри модалок/дропдаунов на iOS --- */
+@supports (-webkit-overflow-scrolling: touch) {
+    .modal-body,
+    .dropdown-menu {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* --- Утилиты для скрытия на мобильных --- */
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none !important;
+    }
+}
+
+@media (min-width: 769px) {
+    .show-mobile-only {
+        display: none !important;
+    }
+}
+
+/* --- Анимация появления (сниженная для мобильных) --- */
+@media (max-width: 768px) {
+    .answer-feedback {
+        animation: fadeInUpMobile 0.3s ease;
+    }
+
+    @keyframes fadeInUpMobile {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* --- Pull-to-refresh защита (если нужно) --- */
+@media (max-width: 768px) {
+    html, body {
+        overscroll-behavior-y: contain;
+    }
+}

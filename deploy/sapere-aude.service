@@ -1,0 +1,16 @@
+[Unit]
+Description=Sapere Aude quiz service (Daphne ASGI)
+After=network.target
+
+[Service]
+Type=simple
+User=site1
+Group=site1
+WorkingDirectory=/home/site1/app/sapere-aude
+Environment=PATH=/home/site1/app/sapere-aude/venv/bin
+ExecStart=/home/site1/app/sapere-aude/venv/bin/daphne -b 127.0.0.1 -p 8000 sapere_aude.asgi:application
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

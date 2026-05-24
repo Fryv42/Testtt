@@ -1,0 +1,104 @@
+## 1. Repository Pattern
+Место применения:
+- Централизация операций доступа к данным викторин и сессий.
+- Слой API не работает напрямую с ORM в тех местах, где нужна отдельная точка входа для CRUD-операций.
+
+Файлы реализации:
+- app/repositories.py
+  - QuizRepository: get_by_id, get_active_by_user, create
+  - SessionRepository: get_by_code, create
+
+Где используется в коде:
+- app/repositories.py содержит готовый слой репозиториев и единый интерфейс работы с Quiz/QuizSession.
+
+Обоснование выбора:
+- Упрощает поддержку и покрытие тестами.
+- Позволяет безболезненно менять детали получения/создания сущностей.
+
+Схема:
+[View/API] -> [QuizRepository / SessionRepository] -> [Django ORM] -> [DB]
+
+---
+
+## 2. Factory Pattern (SessionCodeFactory)
+Место применения:
+- Создание кодов сессий как отдельная ответственность, не смешанная с логикой контроллеров.
+
+Файлы реализации:
+- app/factories.py
+  - SessionCodeFactory.create(length=6)
+  - SessionCodeFactory.create_with_prefix(prefix, length=6)
+
+Где используется в коде:
+- app/factories.py реализует единый механизм генерации кодов.
+- app/views.py содержит похожую логику генерации кода (generate_session_code), что подтверждает реальную потребность в фабрике и направление для унификации.
+
+Обоснование выбора:
+- Централизует правила генерации кодов в одном месте.
+- Исключает дублирование и расхождение алгоритма генерации.
+- Упрощает будущие изменения (формат кода, длина, префиксы, проверка уникальности).
+
+Схема:
+[Session start use-case] -> [SessionCodeFactory] -> [session_code]
+
+---
+
+## 3. Observer Pattern (WebSocket consumers)
+Место применения:
+- Реалтайм-обновления для участников квиза через группы Channels.
+- Клиенты подписываются на события конкретной сессии и получают широковещательные сообщения.
+
+Файлы реализации:
+- app/consumers.py (QuizConsumer)
+- app/routing.py (маршрутизация ws/quiz/<session_code>/)
+- sapere_aude/asgi.py (подключение websocket-протокола через URLRouter)
+
+Где используется в коде:
+- В QuizConsumer.connect участник подписывается на группу session_code.
+- В QuizConsumer.receive сообщение публикуется в group_send.
+- В QuizConsumer.quiz_message подписчики получают уведомление.
+
+Обоснование выбора:
+- Нативно подходит для модели "один источник событий -> много подписчиков".
+- Обеспечивает слабую связанность между отправителем и получателями.
+- Позволяет масштабировать realtime-коммуникацию без ручной адресации каждого клиента.
+
+Схема:
+[Client A/B/C] --subscribe--> [QuizConsumer group: quiz_<code>]
+[Any client message] -> [group_send] -> [all subscribed clients notified]
+
+---
+
+## 4. Dependency Injection Pattern
+Место применения:
+- Внедрение зависимостей на уровне фреймворка Django/DRF (инъекция request, serializer context, permission classes, queryset).
+- Конфигурационное подключение компонентов через роутер и ASGI-композицию.
+
+Файлы реализации:
+- app/views.py
+  - DRF внедряет request, action context, permissions, serializers.
+- app/urls.py
+  - Router внедряет ViewSet-обработчики в URL-конфигурацию.
+- sapere_aude/asgi.py
+  - ProtocolTypeRouter/AuthMiddlewareStack/URLRouter компонуют зависимости протокольного слоя.
+
+Где используется в коде:
+- ViewSet-методы получают зависимости от DRF runtime без ручного создания объектов внутри каждого endpoint.
+- WebSocket-слой собирается через декларативную композицию middleware и router.
+
+Обоснование выбора:
+- Уменьшает жесткую связанность между слоями.
+- Делает код расширяемым (подмена permission/serializer/router-конфигурации без переписывания бизнес-логики).
+- Повышает тестопригодность за счет контролируемых точек подмены зависимостей.
+
+Схема:
+[Framework runtime]
+   -> injects [request/context/permissions]
+   -> calls [ViewSet/Consumer handlers]
+   -> handlers use configured dependencies
+
+Проверка фактического использования паттернов в репозитории:
+- Repository Pattern: реализован в app/repositories.py (используется как выделенный слой доступа к данным).
+- Factory Pattern: реализован в app/factories.py (используется как единая точка генерации кодов).
+- Observer Pattern: активно используется в app/consumers.py + app/routing.py + sapere_aude/asgi.py.
+- Dependency Injection Pattern: используется через механизмы DI самого Django/DRF/Channels (внедрение runtime-зависимостей и middleware/router-композиция).

@@ -1,0 +1,25 @@
+{
+  "name": "sapere-aude-static",
+  "private": true,
+  "scripts": {
+    "test": "jest static/js",
+    "test:coverage": "jest static/js --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testMatch": [
+      "**/static/js/**/__tests__/**/*.test.js",
+      "**/static/js/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "static/js/**/*.js",
+      "!static/js/**/__tests__/**",
+      "!static/js/**/*.test.js",
+      "!static/js/mobile-test.js"
+    ]
+  }
+}

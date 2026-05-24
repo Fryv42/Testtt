@@ -1,0 +1,31 @@
+# Фрагмент для .gitlab-ci.yml — job деплоя на 188.127.254.20
+# Переменные: SSH_PRIVATE_KEY (file), DEPLOY_HOST, DEPLOY_USER, DEPLOY_PATH, DEPLOY_BRANCH
+
+deploy:production:
+  stage: deploy
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache openssh-client bash
+    - eval "$(ssh-agent -s)"
+    - chmod 600 "$SSH_PRIVATE_KEY"
+    - ssh-add "$SSH_PRIVATE_KEY"
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh -o StrictHostKeyChecking=yes "${DEPLOY_USER}@${DEPLOY_HOST}" \
+        "DEPLOY_BRANCH=${DEPLOY_BRANCH:-main} APP_DIR=${DEPLOY_PATH} bash ${DEPLOY_PATH}/deploy/deploy.sh"
+  needs:
+    - job: test
+    - job: lint
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "feature/devops"
+  environment:
+    name: production
+    url: http://188.127.254.20
+  variables:
+    DEPLOY_HOST: "188.127.254.20"
+    DEPLOY_USER: "root"
+    DEPLOY_PATH: "/home/site1/app/sapere-aude"
+    DEPLOY_BRANCH: "main"

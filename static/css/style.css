@@ -1,0 +1,121 @@
+.quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.quiz-timer {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background-color: #f8f9fa;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.quiz-timer.timer-warning {
+    color: #dc3545;
+    background-color: #ffe6e6;
+    animation: timer-pulse 1s infinite;
+}
+
+.quiz-timer.timer-expired {
+    color: #ffffff;
+    background-color: #dc3545;
+}
+
+@keyframes timer-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.question-container {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.question-order {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.question-text {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.answer-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+}
+
+.answer-option {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border: 2px solid #dee2e6;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.answer-option:hover {
+    border-color: #0d6efd;
+    background: #f8f9ff;
+}
+
+.answer-option input[type="radio"] {
+    margin-right: 0.75rem;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.answer-option.answer-correct {
+    border-color: #198754;
+    background: #d1e7dd;
+}
+
+.answer-option.answer-incorrect {
+    border-color: #dc3545;
+    background: #f8d7da;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.quiz-complete {
+    text-align: center;
+    padding: 2rem;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.quiz-complete h2 {
+    color: #198754;
+    margin-bottom: 1rem;
+}
+
+.quiz-complete p {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+}
