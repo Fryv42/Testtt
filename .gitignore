@@ -1,12 +1,47 @@
 ```
-# Executables and binaries
-*.exe
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Database files
-*.db
-
-# Environment files
+# Dependencies
+.venv/
+venv/
+env/
 .env
 .env.local
 *.env.*
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+htmlcov/
+.coverage.*
+.pytest_cache/
+.mypy_cache/
+
+# Distribution
+*.tar.gz
+*.zip
+*.tar
+*.gz
 ```
